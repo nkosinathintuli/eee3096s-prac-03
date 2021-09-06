@@ -13,6 +13,7 @@ LED_accuracy = 32
 btn_submit = 16
 btn_increase = 18
 buzzer = None
+pwm_acc = None
 eeprom = ES2EEPROMUtils.ES2EEPROM()
 
 
@@ -64,8 +65,16 @@ def display_scores(count, raw_data):
 # Setup Pins
 def setup():
     # Setup board mode
+    GPIO.setmode(GPIO.BOARD)
     # Setup regular GPIO
+    GPIO.setup(LED_value[0], GPIO.OUT)
+    GPIO.setup(LED_value[1], GPIO.OUT)
+    GPIO.setup(LED_value[2], GPIO.OUT)
+    GPIO.setup(LED_accuracy, GPIO.OUT)
+    GPIO.setup(btn_submit, GPIO.IN)
+    GPIO.setup(btn_increase, GPIO.IN)
     # Setup PWM channels
+    pwm_acc=GPIO.PWM(LED_accuracy, 1)
     # Setup debouncing and callbacks
     pass
 
@@ -127,6 +136,12 @@ def accuracy_leds():
     # - The % brightness should be directly proportional to the % "closeness"
     # - For example if the answer is 6 and a user guesses 4, the brightness should be at 4/6*100 = 66%
     # - If they guessed 7, the brightness would be at ((8-7)/(8-6)*100 = 50%
+    acc=0
+    if guess<=value:
+       acc=((8-guess)/(8-value))*100
+    else:
+       acc=guess/value*100
+    
     pass
 
 # Sound Buzzer
