@@ -3,19 +3,19 @@ import RPi.GPIO as GPIO
 import random
 import ES2EEPROMUtils
 import os
-
+import time
 # some global variables that need to change as we run the program
 end_of_game = None  # set if the user wins or ends the game
-
+#current=-1
 # DEFINE THE PINS USED HERE
 LED_value = [11, 13, 15]
 LED_accuracy = 32
 btn_submit = 16
 btn_increase = 18
-buzzer = None
-pwm_acc = None
+buzzer = 33
+#pwm_acc = None
 eeprom = ES2EEPROMUtils.ES2EEPROM()
-
+time_debounce = 0
 
 # Print the game banner
 def welcome():
@@ -45,6 +45,7 @@ def menu():
         print("Starting a new round!")
         print("Use the buttons on the Pi to make and submit your guess!")
         print("Press and hold the guess button to cancel your game")
+        global value
         value = generate_number()
         while not end_of_game:
             pass
@@ -71,11 +72,23 @@ def setup():
     GPIO.setup(LED_value[1], GPIO.OUT)
     GPIO.setup(LED_value[2], GPIO.OUT)
     GPIO.setup(LED_accuracy, GPIO.OUT)
-    GPIO.setup(btn_submit, GPIO.IN)
-    GPIO.setup(btn_increase, GPIO.IN)
+
+    GPIO.setup(buzzer, GPIO.OUT)
+    GPIO.setwarnings(False)
+
+    GPIO.setup(btn_submit, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(btn_increase, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # Setup PWM channels
-    pwm_acc=GPIO.PWM(LED_accuracy, 1)
+    global pwm_acc
+    pwm_acc=GPIO.PWM(LED_accuracy, 50)
+    pwm_acc.start(0)
+
+    global buzz
+    buzz=GPIO.PWM(buzzer,1)
+    buzz.start(0)
     # Setup debouncing and callbacks
+    GPIO.add_event_detect(btn_submit,GPIO.RISING,callback=btn_guess_pressed,bouncetime=200)
+    GPIO.add_event_detect(btn_increase,GPIO.RISING,callback=btn_increase_pressed)
     pass
 
 
@@ -108,8 +121,38 @@ def generate_number():
 
 # Increase button pressed
 def btn_increase_pressed(channel):
+    global counter
+    counter1=time.time() 
+    if (counter1-counter)>=0.3:
+       v1=0
+       v2=0
+       v3=0
+       global current
+       current=current+1
+       if current==8:
+          current=0
+       print(current)
+       GPIO.output(LED_value[2], GPIO.LOW)
+       GPIO.output(LED_value[1], GPIO.LOW)
+       GPIO.output(LED_value[0], GPIO.LOW)
+       current1=current
     # Increase the value shown on the LEDs
-    # You can choose to have a global variable store the user's current guess, 
+       for i in range(3):
+          if i==0:
+             v1=current1%2
+          if i==1:
+             v2=current1%2
+          if i==2:
+             v3=current1%2
+          current1=current1//2
+    # You can choose to have a global variable store the user's current guess,
+       if v3==1:
+          GPIO.output(LED_value[1], GPIO.HIGH)
+       if v2==1:
+          GPIO.output(LED_value[2], GPIO.HIGH)
+       if v1==1:
+          GPIO.output(LED_value[0], GPIO.HIGH)
+
     # or just pull the value off the LEDs when a user makes a guess
     pass
 
@@ -119,6 +162,7 @@ def btn_guess_pressed(channel):
     # If they've pressed and held the button, clear up the GPIO and take them back to the menu screen
     # Compare the actual value with the user value displayed on the LEDs
     # Change the PWM LED
+    accuracy_leds()
     # if it's close enough, adjust the buzzer
     # if it's an exact guess:
     # - Disable LEDs and Buzzer
@@ -137,11 +181,13 @@ def accuracy_leds():
     # - For example if the answer is 6 and a user guesses 4, the brightness should be at 4/6*100 = 66%
     # - If they guessed 7, the brightness would be at ((8-7)/(8-6)*100 = 50%
     acc=0
-    if guess<=value:
-       acc=((8-guess)/(8-value))*100
+    if value<=current:
+       acc=((8-current)/(8-value))*100
     else:
-       acc=guess/value*100
-    
+       acc=current/value*100
+    pwm_acc.ChangeDutyCycle(acc)
+    print(value)
+    print(current)
     pass
 
 # Sound Buzzer
@@ -149,17 +195,28 @@ def trigger_buzzer():
     # The buzzer operates differently from the LED
     # While we want the brightness of the LED to change(duty cycle), we want the frequency of the buzzer to change
     # The buzzer duty cycle should be left at 50%
+    buzz.ChangeDutyCycle(50)
     # If the user is off by an absolute value of 3, the buzzer should sound once every second
+    x=abs(current-value)
+    if x==3:
+       buzz.ChangeFrequency(1)
     # If the user is off by an absolute value of 2, the buzzer should sound twice every second
+    if x==2:
+       buzz.ChangeFrequency(2)
     # If the user is off by an absolute value of 1, the buzzer should sound 4 times a second
+    if x==1:
+       buzz.ChangeFrequency(4)
     pass
 
 
 if __name__ == "__main__":
     try:
         # Call setup function
+        counter=time.time()
         setup()
         welcome()
+        current=-1
+        value=-1
         while True:
             menu()
             pass
@@ -167,3 +224,5 @@ if __name__ == "__main__":
         print(e)
     finally:
         GPIO.cleanup()
+        pwm_acc.stop()
+        buzz.stop()
