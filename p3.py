@@ -164,6 +164,9 @@ def btn_guess_pressed(channel):
     # Change the PWM LED
     accuracy_leds()
     # if it's close enough, adjust the buzzer
+    trigger_buzzer()
+    if value==current :
+       GPIO.cleanup()
     # if it's an exact guess:
     # - Disable LEDs and Buzzer
     # - tell the user and prompt them for a name
@@ -186,6 +189,9 @@ def accuracy_leds():
     else:
        acc=current/value*100
     pwm_acc.ChangeDutyCycle(acc)
+    if value==current:
+       pwm_acc.ChangeDutyCycle(0)
+    
     print(value)
     print(current)
     pass
@@ -198,6 +204,8 @@ def trigger_buzzer():
     buzz.ChangeDutyCycle(50)
     # If the user is off by an absolute value of 3, the buzzer should sound once every second
     x=abs(current-value)
+    if x==0:
+       buzz.ChangeDutyCycle(0)
     if x==3:
        buzz.ChangeFrequency(1)
     # If the user is off by an absolute value of 2, the buzzer should sound twice every second
