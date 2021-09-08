@@ -33,6 +33,7 @@ def welcome():
 # Print the game menu
 def menu():
     global end_of_game
+    eeprom.populate_mock_scores()
     option = input("Select an option:   H - View High Scores     P - Play Game       Q - Quit\n")
     option = option.upper()
     if option == "H":
@@ -59,6 +60,7 @@ def menu():
 def display_scores(count, raw_data):
     # print the scores to the screen in the expected format
     print("There are {} scores. Here are the top 3!".format(count))
+    print(raw_data)
     # print out the scores in the required format
     pass
 
@@ -97,7 +99,8 @@ def fetch_scores():
     # get however many scores there are
     score_count = None
     # Get the scores
-    
+    score_count = eeprom.read_block(0, 4)
+    scores = eeprom.read_block(1, 16)
     # convert the codes back to ascii
     
     # return back the results
