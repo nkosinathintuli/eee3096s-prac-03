@@ -60,7 +60,11 @@ def menu():
 def display_scores(count, raw_data):
     # print the scores to the screen in the expected format
     print("There are {} scores. Here are the top 3!".format(count))
-    print(raw_data)
+    
+    for j in range(3):
+        score_info = raw_data[slice(j*4, j*4+4)]
+	usrname = ''.join(score_info[slice(0,3)])
+        print(usrname)
     # print out the scores in the required format
     pass
 
@@ -99,10 +103,16 @@ def fetch_scores():
     # get however many scores there are
     score_count = None
     # Get the scores
-    score_count = eeprom.read_block(0, 4)
-    scores = eeprom.read_block(1, 16)
+    score_count = eeprom.read_byte(0) # 1st 4 byte for no of scores stored
+    scores = eeprom.read_block(1, score_count*4)
     # convert the codes back to ascii
-    
+    count = 0
+    for i in range(len(scores)):
+        count+=1
+        if count == 4:
+            count = 0
+        else:
+            scores[i] = chr(scores[i]) 
     # return back the results
     return score_count, scores
 
