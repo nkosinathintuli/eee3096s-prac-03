@@ -63,8 +63,9 @@ def display_scores(count, raw_data):
     
     for j in range(3):
         score_info = raw_data[slice(j*4, j*4+4)]
-	usrname = ''.join(score_info[slice(0,3)])
-        print(usrname)
+        usrname = ''.join(score_info[slice(0,3)])
+        c = j+1
+        print(str(c)+" - "+usrname+" took "+str(score_info[3])+" guesses")
     # print out the scores in the required format
     pass
 
