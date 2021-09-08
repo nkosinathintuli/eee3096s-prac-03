@@ -87,8 +87,8 @@ def setup():
     buzz=GPIO.PWM(buzzer,1)
     buzz.start(0)
     # Setup debouncing and callbacks
-    GPIO.add_event_detect(btn_submit,GPIO.RISING,callback=btn_guess_pressed,bouncetime=200)
-    GPIO.add_event_detect(btn_increase,GPIO.RISING,callback=btn_increase_pressed)
+    GPIO.add_event_detect(btn_submit,GPIO.FALLING,callback=btn_guess_pressed)
+    GPIO.add_event_detect(btn_increase,GPIO.FALLING,callback=btn_increase_pressed,bouncetime=200)
     pass
 
 
@@ -121,9 +121,9 @@ def generate_number():
 
 # Increase button pressed
 def btn_increase_pressed(channel):
-    global counter
-    counter1=time.time() 
-    if (counter1-counter)>=0.3:
+    #global counter
+    #counter1=time.time() 
+    if (True):
        v1=0
        v2=0
        v3=0
@@ -162,11 +162,28 @@ def btn_guess_pressed(channel):
     # If they've pressed and held the button, clear up the GPIO and take them back to the menu screen
     # Compare the actual value with the user value displayed on the LEDs
     # Change the PWM LED
-    accuracy_leds()
-    # if it's close enough, adjust the buzzer
-    trigger_buzzer()
-    if value==current :
+    global counter
+    counter1=time.time()
+    while GPIO.input(btn_submit)== GPIO.LOW:
+       time.sleep(0.01)
+    length=time.time()-counter1
+    if (length)>=2:
        GPIO.cleanup()
+       end_of_game=True
+       length=0
+    #counter=counter1
+    if (counter1-counter)>=0.3:
+       #GPIO.cleanup()
+#      counter=counter1
+       accuracy_leds()
+    # if it's close enough, adjust the buzzer
+       trigger_buzzer()
+#       if value==current:
+#          GPIO.cleanup()
+#    if (counter1-counter)>=2:
+#       GPIO.cleanup()
+    #counter=counter1
+       #counter=counter1
     # if it's an exact guess:
     # - Disable LEDs and Buzzer
     # - tell the user and prompt them for a name
@@ -182,15 +199,15 @@ def accuracy_leds():
     # Set the brightness of the LED based on how close the guess is to the answer
     # - The % brightness should be directly proportional to the % "closeness"
     # - For example if the answer is 6 and a user guesses 4, the brightness should be at 4/6*100 = 66%
-    # - If they guessed 7, the brightness would be at ((8-7)/(8-6)*100 = 50%
-    acc=0
+    # - If they guessed 7, the brightness would be at ((8-7)/(8-6)*100 = 50%/
+    acc=0.01
     if value<=current:
        acc=((8-current)/(8-value))*100
     else:
        acc=current/value*100
     pwm_acc.ChangeDutyCycle(acc)
     if value==current:
-       pwm_acc.ChangeDutyCycle(0)
+       pwm_acc.ChangeDutyCycle(0.01)
     
     print(value)
     print(current)
@@ -205,7 +222,7 @@ def trigger_buzzer():
     # If the user is off by an absolute value of 3, the buzzer should sound once every second
     x=abs(current-value)
     if x==0:
-       buzz.ChangeDutyCycle(0)
+       buzz.ChangeDutyCycle(0.01)
     if x==3:
        buzz.ChangeFrequency(1)
     # If the user is off by an absolute value of 2, the buzzer should sound twice every second
