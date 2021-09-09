@@ -33,9 +33,11 @@ def welcome():
 
 # Print the game menu
 def menu():
+    #eeprom.clear(2048)
+    #eeprom.populate_mock_scores()
     global end_of_game
-    eeprom.populate_mock_scores()
-    option = input("Select an option:   H - View High Scores     P - Play Game       Q - Quit\n")
+    #eeprom.populate_mock_scores()
+    option = input("Select an option:   H - View High Scores     P - Play Game       Q - Quit        C - Clear All Scores\n")
     option = option.upper()
     end_of_game=False
     guess=0
@@ -45,7 +47,8 @@ def menu():
         os.system('clear')
         print("HIGH SCORES!!")
         s_count, ss = fetch_scores()
-        display_scores(s_count, ss)
+        if s_count >0:
+            display_scores(s_count, ss)
     elif option == "P":
         os.system('clear')
         print("Starting a new round!")
@@ -58,6 +61,8 @@ def menu():
     elif option == "Q":
         print("Come back soon!")
         exit()
+    elif option == "C":
+        eeprom.clear(2048)
     else:
         print("Invalid option. Please select a valid one!")
 
@@ -66,7 +71,9 @@ def display_scores(count, raw_data):
     # print the scores to the screen in the expected format
     print("There are {} scores. Here are the top 3!".format(count))
     
-    for j in range(3):
+    for j in range(count):
+        if j>2:
+            break
         score_info = raw_data[slice(j*4, j*4+4)]
         usrname = ''.join(score_info[slice(0,3)])
         c = j+1
@@ -128,10 +135,29 @@ def fetch_scores():
 # Save high scores
 def save_scores():
     # fetch scores
+    score_count = eeprom.read_byte(0)
+    scores = eeprom.read_block(1, score_count*4)
     # include new score
+    data = []
+    #print(scores)
+    for i in range(score_count):
+        data.append(scores[slice(i*4, i*4+4)])
+    #print(data)
+    usrnm = list(username)
+    usrnm = [ord(i) for i in usrnm]
+    usrnm.append(guess)
+    data.append(usrnm)
+    score_count = score_count+1
     # sort
+    #print(data)
+    data.sort(key=lambda x: x[3])
+    # scores.
     # update total amount of scores
     # write new scores
+    data = [b for c in data for b in c]
+    #print(data)
+    eeprom.write_block(1, data)
+    eeprom.write_block(0, [score_count])
     pass
 
 
@@ -212,6 +238,7 @@ def btn_guess_pressed(channel):
              if len(name)==3:
                 username=name
                 end_of_game=True
+                save_scores()
                 break
              print("Enter username of length 3:")
  
