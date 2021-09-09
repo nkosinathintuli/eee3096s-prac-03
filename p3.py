@@ -1,3 +1,4 @@
+
 # Import libraries
 import RPi.GPIO as GPIO
 import random
@@ -151,7 +152,7 @@ def btn_increase_pressed(channel):
        current=current+1
        if current==8:
           current=0
-       print(current)
+#       print(current)
        GPIO.output(LED_value[2], GPIO.LOW)
        GPIO.output(LED_value[1], GPIO.LOW)
        GPIO.output(LED_value[0], GPIO.LOW)
@@ -203,6 +204,8 @@ def btn_guess_pressed(channel):
        trigger_buzzer()
         
        if value==current:
+
+          end_of_game=True
           global username
           while True:
              name = input("Enter username:")
@@ -240,11 +243,15 @@ def accuracy_leds():
        acc=current/value*100
     pwm_acc.ChangeDutyCycle(acc)
     if value==current:
-       pwm_acc.ChangeDutyCycle(0.01)
-    print("Guess",guess)
-    print(value)
-    print(username)
-    print(current)
+       GPIO.output(32, GPIO.LOW)
+       GPIO.output(LED_value[1], GPIO.LOW)
+       GPIO.output(LED_value[2], GPIO.LOW)
+       GPIO.output(LED_value[0], GPIO.LOW)
+       pwm_acc.ChangeDutyCycle(0.0000000000001)
+#    print("Guess",guess)
+ #   print(value)
+  #  print(username)
+   # print(current)
     pass
 
 # Sound Buzzer
