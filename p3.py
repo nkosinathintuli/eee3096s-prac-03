@@ -36,6 +36,10 @@ def menu():
     eeprom.populate_mock_scores()
     option = input("Select an option:   H - View High Scores     P - Play Game       Q - Quit\n")
     option = option.upper()
+    end_of_game=False
+    guess=0
+    username=""
+    current=-1
     if option == "H":
         os.system('clear')
         print("HIGH SCORES!!")
@@ -79,7 +83,9 @@ def setup():
     GPIO.setup(LED_value[1], GPIO.OUT)
     GPIO.setup(LED_value[2], GPIO.OUT)
     GPIO.setup(LED_accuracy, GPIO.OUT)
-
+    GPIO.output(LED_value[1], GPIO.LOW) 
+    GPIO.output(LED_value[2], GPIO.LOW)
+    GPIO.output(LED_value[0], GPIO.LOW)
     GPIO.setup(buzzer, GPIO.OUT)
     GPIO.setwarnings(False)
 
@@ -94,7 +100,7 @@ def setup():
     buzz=GPIO.PWM(buzzer,1)
     buzz.start(0)
     # Setup debouncing and callbacks
-    GPIO.add_event_detect(btn_submit,GPIO.FALLING,callback=btn_guess_pressed)
+    GPIO.add_event_detect(btn_submit,GPIO.FALLING,callback=btn_guess_pressed,bouncetime=200)
     GPIO.add_event_detect(btn_increase,GPIO.FALLING,callback=btn_increase_pressed,bouncetime=200)
     pass
 
@@ -177,6 +183,7 @@ def btn_guess_pressed(channel):
     # Compare the actual value with the user value displayed on the LEDs
     # Change the PWM LED
     global counter
+    global end_of_game
     counter1=time.time()
     while GPIO.input(btn_submit)== GPIO.LOW:
        time.sleep(0.01)
@@ -188,11 +195,23 @@ def btn_guess_pressed(channel):
     #counter=counter1
     if (counter1-counter)>=0.3:
        #GPIO.cleanup()
+       global guess
+       guess+=1
 #      counter=counter1
        accuracy_leds()
     # if it's close enough, adjust the buzzer
        trigger_buzzer()
-#       if value==current:
+        
+       if value==current:
+          global username
+          while True:
+             name = input("Enter username:")
+             if len(name)==3:
+                username=name
+                end_of_game=True
+                break
+             print("Enter username of length 3:")
+ 
 #          GPIO.cleanup()
 #    if (counter1-counter)>=2:
 #       GPIO.cleanup()
@@ -222,8 +241,9 @@ def accuracy_leds():
     pwm_acc.ChangeDutyCycle(acc)
     if value==current:
        pwm_acc.ChangeDutyCycle(0.01)
-    
+    print("Guess",guess)
     print(value)
+    print(username)
     print(current)
     pass
 
@@ -236,7 +256,7 @@ def trigger_buzzer():
     # If the user is off by an absolute value of 3, the buzzer should sound once every second
     x=abs(current-value)
     if x==0:
-       buzz.ChangeDutyCycle(0.01)
+       buzz.ChangeDutyCycle(0.00000000001)
     if x==3:
        buzz.ChangeFrequency(1)
     # If the user is off by an absolute value of 2, the buzzer should sound twice every second
@@ -254,6 +274,8 @@ if __name__ == "__main__":
         counter=time.time()
         setup()
         welcome()
+        username=""
+        guess=0
         current=-1
         value=-1
         while True:
