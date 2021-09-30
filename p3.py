@@ -35,22 +35,24 @@ def welcome():
 def menu():
     #eeprom.clear(2048)
     #eeprom.populate_mock_scores()
+    
     global end_of_game
-    #eeprom.populate_mock_scores()
-    option = input("Select an option:   H - View High Scores     P - Play Game       Q - Quit        C - Clear All Scores\n")
-    option = option.upper()
     end_of_game=False
     guess=0
     username=""
     current=-1
+    
+    option = input("Select an option:    H - View High Scores    P - Play Game    Q - Quit    C - Clear All Scores\n")
+    option = option.upper()
+    
     if option == "H":
         os.system('clear')
         print("HIGH SCORES!!")
         s_count, ss = fetch_scores()
         if s_count >0:
+            os.system('clear')
             display_scores(s_count, ss)
     elif option == "P":
-        os.system('clear')
         print("Starting a new round!")
         print("Use the buttons on the Pi to make and submit your guess!")
         print("Press and hold the guess button to cancel your game")
@@ -242,11 +244,11 @@ def btn_guess_pressed(channel):
                 break
              print("Enter username of length 3:")
  
-#          GPIO.cleanup()
-#    if (counter1-counter)>=2:
-#       GPIO.cleanup()
-    #counter=counter1
-       #counter=counter1
+    # GPIO.cleanup()
+    # if (counter1-counter)>=2:
+    #    GPIO.cleanup()
+    #     counter=counter1
+    #     counter=counter1
     # if it's an exact guess:
     # - Disable LEDs and Buzzer
     # - tell the user and prompt them for a name
@@ -275,10 +277,10 @@ def accuracy_leds():
        GPIO.output(LED_value[2], GPIO.LOW)
        GPIO.output(LED_value[0], GPIO.LOW)
        pwm_acc.ChangeDutyCycle(0.0000000000001)
-#    print("Guess",guess)
- #   print(value)
-  #  print(username)
-   # print(current)
+    # print("Guess",guess)
+    # print(value)
+    # print(username)
+    # print(current)
     pass
 
 # Sound Buzzer
